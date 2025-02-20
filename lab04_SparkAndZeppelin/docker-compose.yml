@@ -1,0 +1,15 @@
+version: "3"
+services:
+  zeppelin:
+    image: ghcr.io/heigvd-202409-mac-a/zeppelin:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      ZEPPELIN_LOG_DIR: /repo/logs
+      ZEPPELIN_NOTEBOOK_DIR: /repo
+    volumes:
+      - ".:/repo"
+

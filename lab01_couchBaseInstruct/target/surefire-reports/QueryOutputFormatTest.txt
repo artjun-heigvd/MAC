@@ -1,0 +1,12 @@
+-------------------------------------------------------------------------------
+Test set: QueryOutputFormatTest
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 11.59 s <<< FAILURE! -- in QueryOutputFormatTest
+QueryOutputFormatTest.testNightMoviesQuery -- Time elapsed: 0.240 s <<< ERROR!
+java.lang.UnsupportedOperationException: Not implemented, yet
+	at ch.heig.mac.Requests.nightMovies(Requests.java:159)
+	at QueryOutputFormatTest.testNightMoviesQuery(QueryOutputFormatTest.java:140)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+

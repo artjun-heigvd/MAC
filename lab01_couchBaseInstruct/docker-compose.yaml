@@ -1,0 +1,18 @@
+services:
+  couchbase-server:
+    image: ghcr.io/heigvd-202409-mac-a/couchbase:latest
+    build:
+      dockerfile: Dockerfile
+      context: images
+    volumes:
+      - ./data:/data
+    ports:
+      - "8091:8091"
+      - "8092:8092"
+      - "8093:8093"
+      - "8094:8094"
+      - "8095:8095"
+      - "8096:8096"
+      - "11210:11210"
+      - "11211:11211"
+

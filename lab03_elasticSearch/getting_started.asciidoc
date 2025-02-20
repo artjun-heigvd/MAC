@@ -1,0 +1,123 @@
+= Getting started with Elasticsearch
+
+== Introduction
+=== Objectives
+
+The goal of this lab is to intall _Elasticsearch_, which is a distributed RESTful search engine used widely in the industry based on Apache Lucene (a free and open-source information retrieval software library), and to upload and parse a dataset . 
+
+
+=== Organization
+
+There is no submission for this part, however all the steps are required to complete the next lab which will consist of indexing and searching the uploaded dataset. 
+
+
+=== Setup
+
+The repo contains:
+
+* ``data/``
+** ``cacm.txt``: CACM collection, see <<Description of the collection>>.
+** ``cacm.ndjson``: CACM collection formated as line separated json objects for easy ingestion.
+** ``common_words.txt``: List of words that can commonly be removed (stop words, used in the next lab).
+* ``docker-compose.yml``: correctly configured docker deployment so that:
+** Kibana can securily communicate with _Elasticsearch_.
+** At least one node in the cluster must have role ``ingest``, it is the https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#node-roles[default].
+** The file ``common_words.txt`` is available inside the https://www.elastic.co/guide/en/elasticsearch/reference/current/settings.html#config-files-location[config directory].
+* ``.env``: the configuration parameters for ``docker-compose.yml``
+
+
+Deploy an _Elasticsearch_ cluster. The easiest way to do it is with docker.
+
+With docker and docker-compose installed on your computer, it should be as simple as opening a terminal and executing  
+``docker compose up`` from inside the extracted archive. 
+
+
+You can now access the Kibana web interface via http://localhost:5601. Kibana is a free interface to visualize, navigate and manage data in _Elasticsearch_. To login use ``elastic`` as the username and ``MAC2024`` as the password.
+
+[NOTE] 
+==== 
+- If you have this error in the logs, follow the instruction at this https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#_set_vm_max_map_count_to_at_least_262144[link] :
++
+``bootstrap check failure [1] of [1]: max virtual memory areas vm.max_map_count [XX] is too low``
+- You need to have at least 10% of free space on the disk which contains ElasticSearch.  
+- You may need to do ``docker compose down --volumes`` before retrying to start the docker-compose. Attention, this will delete any data you may have stored in Elasticsearch.
+====
+
+== Familiarizing with _Elasticsearch_
+
+=== Sending queries to _Elasticsearch_
+
+You send data and other requests to _Elasticsearch_ using REST APIs. This lets you interact with _Elasticsearch_ using any client that sends HTTP requests, such as ``curl``. We recommend to use _Kibana_’s http://localhost:5601/app/dev_tools#/console[console] in the dev tools to send requests to _Elasticsearch_. This way you can easily take advantage of the API request examples present in the documentation.
+
+When sending requests do not forget to escape special characters in JSON strings. An  example of a string containing a new line is:  ``"Hello\nWorld"``.
+
+Take a quick tour of the basic functionalities and queries by following the _Elasticsearch_ https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html[Quick Start].
+
+.Screenshot of the dev console
+image::images/screenshot-devtools.png[Dev console]
+
+
+== Ingesting and exploring the CACM collection
+
+We are now going to use _Elasticsearch_ to ingest and explore a list of scientific publications. 
+
+
+=== Description of the collection
+In this document and the following lab we will use the famous text corpus, CACM. The CACM collection is a set of titles and abstracts from the journal Communications of ACM. It is provided in the file ``cacm.txt``. To facilitate the ingestion, we also provide a transformed version of CACM called ``cacm.ndjson``. ``cacm.txt`` is provided only because it's easier to read.
+
+Each line in ``cacm.ndjson`` is a JSON object with a ``_row`` attribute which contains the following information, separated by tabulations: 
+
+* the publication id
+* the authors (if any, separated by `;')
+* the title
+* the date of publication (year and month)
+* the summary (if any)
+
+There might be publications without any author or without the summary field.
+
+
+=== Ingesting
+
+The goal of this part is to upload and parse the CACM publication collection using https://www.elastic.co/guide/en/elasticsearch/reference/current/ingest.html[Ingest pipelines]. 
+
+You add data to Elasticsearch as JSON objects called documents. Elasticsearch stores these documents in searchable indices.
+
+The file ``cacm.ndjson`` contains a version of the collection readable by _Kibana_.
+
+1. Upload the collection into an index called ``cacm_raw``. In Kibana, go to http://localhost:5601/app/home#/tutorial_directory/fileDataViz["Integrations > Upload file"] and drop the ``cacm.ndjson`` file.
+**  Elasticsearch automatically assigns a field ``_id`` to each document for internal identification. It must not be confused with the ``id`` of the CACM collection.
+2. Create an ingest pipeline which parses the ``_row`` field and returns documents with only the following fields: ``id``, ``author``, ``title``, ``date``, ``summary``. 
+** You have two options: you can either manually create an HTTP request or you can use the Kibana interface (see https://www.elastic.co/guide/en/elasticsearch/reference/current/ingest.html[detailed instructions] in documentation).
+** In any case, you will need the following processors: https://www.elastic.co/guide/en/elasticsearch/reference/current/csv-processor.html[csv] with quote set to "§"footnote:[The "§" character is not used in the dataset so we use it to avoid problems due to the presence of double quote in the dataset.], https://www.elastic.co/guide/en/elasticsearch/reference/current/split-processor.html[split] to separate authors and https://www.elastic.co/guide/en/elasticsearch/reference/current/remove-processor.html[remove] to delete the ``_row`` field.
+** *Note: To insert a tab character in the browser, you need to type it in another program, for example a word processor, and then copy and paste it.*
+3. In order to apply the created pipeline to the uploaded documents use https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html[reindex]. Reindex copies the documents from a source index (in your case ``cacm_raw``) into another index (here you call it ``cacm_dynamic``) optionally using a pipeline.
+4. Verify that you have the same number of documents to assure that reindex was correctly executed.
+
+
+=== Exploring
+
+The goal of this part is to explore the dataset and created index using Kibana and Data Views.
+
+Kibana requires the creation of a Data View to discover the data inside the indexes.
+
+1. Go to http://localhost:5601/app/management/kibana/dataViews[Stack Management > Data Views]
+2. Click on "Create data view".
+3. Set the index pattern name to ``cacm_dynamic``
+4. Set the Timestamp field to "I don't want to use the time filter"
+5. Click on "Save data view to Kibana"
+
+Go to the Analytics > Discover panel and browse the collection using the new data view.
+
+Find the answer to the following  using https://www.elastic.co/guide/en/kibana/current/kuery-query.html[KQL] or "Field Statistics":
+
+1. How many documents are in the index?
+2. How many documents have a summary field?
+3. How many document don't have any author?
+4. How many document have been published after 1975?
+
+You can also use it if you need to get the automatic ``_id`` assigned to a given document.
+
+NOTE: Reindexing does not change the ``_id`` of a document.
+
+.Screenshot of the ``cacm_dynamic`` dataview
+image::images/screenshot-results.png[Results]
