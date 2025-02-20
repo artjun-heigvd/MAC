@@ -1,6 +1,6 @@
 > Commentaires sur le report.md
 
-```json
+```
         "fielddata": true,   
         "index_options": "offsets"
       },
@@ -18,7 +18,7 @@ From v8, doc says that `"index": false` is still queryable but slow.
 
 Accept "yes", but impact would be greater if using "with_offsets".
 
-```json
+```
 Les vecteurs de termes (term vectors) sont des structures qui contiennent des informtions sur les termes produits par l'analyse d'un champ. Ils contiennent:
 
 - La liste des termes
